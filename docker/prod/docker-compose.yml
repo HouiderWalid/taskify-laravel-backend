@@ -14,7 +14,7 @@ services:
             - ./supervisor:/etc/supervisor
             - ./fpm/php-fpm.d:/usr/local/etc/php-fpm.d
         networks:
-            - healtrition_prod
+            - taskify_prod
         healthcheck:
             test: [ "CMD", "sh", "-c", "supervisorctl status | grep -v RUNNING && exit 1 || exit 0" ]
             interval: 10s
@@ -22,5 +22,5 @@ services:
             retries: 3
 
 networks:
-    healtrition_prod:
+    taskify_prod:
         external: true

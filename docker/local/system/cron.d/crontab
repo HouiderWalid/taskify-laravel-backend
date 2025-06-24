@@ -1,0 +1,4 @@
+* * * * * root cd /var/www/html && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1
+#0 0 * * * /opt/certbot/bin/certbot renew --quiet --no-self-upgrade --deploy-hook 'nginx -s reload'
+
+# Don't remove the empty line at the end of this file. It is required to run the cron job

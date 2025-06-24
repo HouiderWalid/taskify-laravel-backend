@@ -3,14 +3,26 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\helpers\BaseUser;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends BaseUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable, HasApiTokens;
+
+    const TABLE_NAME = 'users';
+
+    const id_attribute_name = 'id';
+    const role_id_attribute_name = 'role_id';
+    const full_name_attribute_name = 'full_name';
+    const email_attribute_name = 'email';
+    const password_attribute_name = 'password';
+    const email_verified_at_attribute_name = 'email_verified_at';
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +30,10 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        self::role_id_attribute_name,
+        self::full_name_attribute_name,
+        self::email_attribute_name,
+        self::password_attribute_name,
     ];
 
     /**
@@ -29,7 +42,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        self::password_attribute_name,
         'remember_token',
     ];
 
@@ -41,8 +54,43 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            self::email_verified_at_attribute_name => 'datetime',
+            self::password_attribute_name => 'hashed',
         ];
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, self::getRoleIdAttributeName(), Role::getIdAttributeName());
+    }
+
+    public static function getFullNameAttributeName(): string
+    {
+        return self::full_name_attribute_name;
+    }
+
+    public static function getEmailAttributeName(): string
+    {
+        return self::email_attribute_name;
+    }
+
+    public static function getPasswordAttributeName(): string
+    {
+        return self::password_attribute_name;
+    }
+
+    public static function getEmailVerifiedAtAttributeName(): string
+    {
+        return self::email_verified_at_attribute_name;
+    }
+
+    public static function getIdAttributeName(): string
+    {
+        return self::id_attribute_name;
+    }
+
+    public static function getRoleIdAttributeName(): string
+    {
+        return self::role_id_attribute_name;
     }
 }

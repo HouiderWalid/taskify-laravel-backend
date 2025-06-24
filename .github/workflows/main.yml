@@ -1,0 +1,48 @@
+name: Build, test and deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install docker-compose -y
+
+      - name: Set Env
+        run: cp .env.github .env
+
+      - name: Build containers
+        run: docker compose -f docker/prod/docker-compose.yml --env-file .env build
+
+      - name: Start containers
+        run: |
+          docker network create taskify_prod
+          docker compose -f docker/prod/docker-compose.yml --env-file .env up -d
+
+      - name: Set up Laravel
+        run: |
+          git config --global --add safe.directory /var/www/html
+          docker exec taskify-back_api-1 composer install --no-progress --no-interaction --prefer-dist
+          docker exec taskify-back_api-1 php artisan key:generate
+
+      - name: Prepare SQLite database
+        run: sudo touch database/database.sqlite
+
+      - name: Run Tests
+        run: docker exec taskify-back_api-1 php artisan test
+
+      - name: Shut down containers
+        if: always()
+        run: docker compose -f docker/prod/docker-compose.yml --env-file .env down
+

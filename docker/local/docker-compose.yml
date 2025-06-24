@@ -1,0 +1,63 @@
+services:
+    laravel:
+        build:
+            context: ../../
+            dockerfile: docker/local/php/Dockerfile
+        ports:
+            - "80:80"
+        volumes:
+            - ../../.:/var/www/html
+            - ./nginx/sites-enabled:/etc/nginx/sites-enabled
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./php/php.ini:/usr/local/etc/php/php.ini
+            - ./supervisor:/etc/supervisor
+            - ./fpm/php-fpm.d:/usr/local/etc/php-fpm.d
+        depends_on:
+            - mysql
+        networks:
+            - taskify_local
+
+    mysql:
+        image: mysql/mysql-server:8.0
+        ports:
+            - "5306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ROOT_HOST: '${DB_HOST}'
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+            - 'mysql-volume:/var/lib/mysql'
+            - './mysql/my.cnf:/etc/my.cnf'
+        networks:
+            - taskify_local
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        environment:
+            - PMA_HOST=${DB_HOST}
+            - PMA_PORT=${DB_PORT}
+            - PMA_USER=${DB_USERNAME}
+            - PMA_PASSWORD=${DB_PASSWORD}
+            - UPLOAD_LIMIT= 300000000
+        depends_on:
+            - mysql
+        volumes:
+            - ./php/php.ini:/usr/local/etc/php/php.ini
+            - ./php/php.ini:/usr/local/etc/php/php.ini-development
+            - ./php/php.ini:/usr/local/etc/php/php.ini-production
+        networks:
+            - taskify_local
+        ports:
+            - "8101:80"
+
+networks:
+    taskify_local:
+        external: true
+
+volumes:
+    mysql-volume:
+        driver: local
+
