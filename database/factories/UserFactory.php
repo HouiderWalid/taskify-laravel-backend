@@ -2,8 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,6 +43,13 @@ class UserFactory extends Factory
         ];
     }
 
+    public function configure(): Factory|UserFactory
+    {
+        return $this->afterCreating(function (User $user) {
+            $user->permissions()->sync($user->getDefaultPermissions());
+        });
+    }
+
     public function credentials($email, $password): UserFactory
     {
         return $this->state(function (array $attributes) use ($email, $password) {
@@ -51,12 +60,28 @@ class UserFactory extends Factory
         });
     }
 
+    public function giveRole(string $roleName): UserFactory
+    {
+        return $this->state(function (array $attributes) use ($roleName) {
+
+            $role = Role::where(Role::getNameAttributeName(), $roleName)->first();
+
+            if (!($role instanceof Role)) {
+                throw new Exception("Role {$roleName} not found");
+            }
+
+            return [
+                User::getRoleIdAttributeName() => $role->getId(),
+            ];
+        });
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             User::getEmailVerifiedAtAttributeName() => null,
         ]);
     }

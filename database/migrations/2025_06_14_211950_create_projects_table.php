@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger(Project::getOwnerIdAttributeName())->index()->nullable();
             $table->string(Project::getNameAttributeName());
             $table->string(Project::getDescriptionAttributeName(), 5000)->nullable();
+            $table->timestamp(Project::getDueDateAttributeName())->nullable();
             $table->timestamps();
         });
     }

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Role;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(Role::TABLE_NAME, function (Blueprint $table) {
-            $table->id(Role::getIdAttributeName());
-            $table->string(Role::getNameAttributeName());
-            $table->timestamps();
+        Schema::create('role_permissions', function (Blueprint $table) {
+            $table->unsignedBigInteger('permission_id');
+            $table->unsignedBigInteger('role_id');
+            $table->primary(['permission_id', 'role_id']);
         });
     }
 
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(Role::TABLE_NAME);
+        Schema::dropIfExists('role_permissions');
     }
 };

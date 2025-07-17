@@ -22,16 +22,22 @@ class UserController extends Controller
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
-            if ($validator->fails()) return $this->apiResponse(401, [], $validator->errors());
+            if ($validator->fails()) {
+                return $this->apiResponse(401, [], $validator->errors());
+            }
 
             $email = $request->input('email');
             $password = $request->input('password');
             $user = User::where(User::getEmailAttributeName(), $email)
-                ->where(User::getPasswordAttributeName(), Hash::make($password))
                 ->first();
 
             if (!($user instanceof User)) {
                 throw new FrontException('Wrong credentials.');
+            }
+
+            $isPasswordCorrect = Hash::check($password, $user->getPassword());
+            if (!$isPasswordCorrect) {
+                throw new FrontException('Wrong credentials');
             }
 
             $token = $user->createToken(config('app.name'))->plainTextToken ?? null;
@@ -55,7 +61,9 @@ class UserController extends Controller
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
-            if ($validator->fails()) return $this->apiResponse(401, [], $validator->errors());
+            if ($validator->fails()) {
+                return $this->apiResponse(401, [], $validator->errors());
+            }
 
             $fullName = $request->input('full_name');
             $email = $request->input('email');
@@ -85,6 +93,18 @@ class UserController extends Controller
                 'token' => $token,
                 'user' => $user
             ]);
+        });
+    }
+
+    public function getAuthUser(Request $request)
+    {
+        return $this->tryInUnrestrictedContext($request, function (Request $request, ?User $user) {
+
+            if (!($user instanceof User)) {
+                throw new Exception("User not found");
+            }
+
+            return $this->apiResponse(200, $user);
         });
     }
 }

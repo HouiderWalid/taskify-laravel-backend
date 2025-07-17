@@ -20,7 +20,6 @@ return new class extends Migration
             $table->string(Task::getDescriptionAttributeName(), 5000)->nullable();
             $table->enum(Task::getStatusAttributeName(), Task::getStatusNames())->default(Task::DEFAULT_STATUS);
             $table->enum(Task::getPriorityAttributeName(), Task::getPriorityNames())->default(Task::DEFAULT_PRIORITY);
-            $table->timestamp(Task::getDueDateAttributeName())->nullable();
             $table->timestamps();
         });
     }

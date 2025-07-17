@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskify-config
+data:
+  host: "taskify.cxkwu08c6cfu.eu-south-2.rds.amazonaws.com"
+  database: "laravel"

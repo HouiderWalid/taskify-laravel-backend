@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\helpers\BaseModel;
 use Database\Factories\RoleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 
 /**
  * @method static RoleFactory factory(...$parameters)
@@ -21,12 +23,15 @@ class Role extends BaseModel
 
     const id_attribute_name = 'id';
     const name_attribute_name = 'name';
-    const permissions_attribute_name = 'permissions';
 
     protected $fillable = [
-        self::name_attribute_name,
-        self::permissions_attribute_name
+        self::name_attribute_name
     ];
+
+    public function defaultPermissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'role_permissions', 'role_id', 'permission_id');
+    }
 
     public static function getIdAttributeName(): string
     {
@@ -36,11 +41,6 @@ class Role extends BaseModel
     public static function getNameAttributeName(): string
     {
         return self::name_attribute_name;
-    }
-
-    public static function getPermissionsAttributeName(): string
-    {
-        return self::permissions_attribute_name;
     }
 
     public static function getRoles(): array
@@ -55,5 +55,16 @@ class Role extends BaseModel
     public function getId()
     {
         return $this->getAttribute(self::getIdAttributeName());
+    }
+
+    public function getName()
+    {
+        return $this->getAttribute(self::getNameAttributeName());
+    }
+
+    public function getDefaultPermissions(): Collection
+    {
+        $defaultPermissions = $this->defaultPermissions ?? null;
+        return $defaultPermissions instanceof Collection ? $defaultPermissions : new Collection();
     }
 }

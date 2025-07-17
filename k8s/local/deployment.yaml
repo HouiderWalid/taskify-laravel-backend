@@ -1,9 +1,104 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secrets
+type: Opaque
+data:
+  root-password: YWRtaW4=
+  root-host: bXlzcWw=
+  database: dGFza2lmeQ==
+  username: YWRtaW4=
+  password: YWRtaW4=
+#---
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: mysql-config
+#data:
+#  my.cnf: |
+#    [mysqld]
+#    # Add your custom MySQL config here
+#    # Example:
+#    # skip-name-resolve
+#    # innodb_buffer_pool_size = 256M
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  serviceName: mysql  # Required for StatefulSet DNS
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mysql
+          image: mysql/mysql-server:8.0
+          ports:
+            - containerPort: 3306  # Internal MySQL port
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: root-password
+            - name: MYSQL_ROOT_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: root-host
+            - name: MYSQL_ROOT_HOST
+              value: "%"  # Allows root access from any host (adjust for security)
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: password
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "1"  # Not recommended for production!
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql  # MySQL data directory
+      #            - name: mysql-config
+      #              mountPath: /etc/my.cnf     # Custom MySQL config
+      #              subPath: my.cnf
+      volumes:
+        - name: mysql-config
+          configMap:
+            name: mysql-config
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "hostpath"
+        resources:
+          requests:
+            storage: 5Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: taskify-laravel-deployment
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: taskify-laravel
@@ -12,12 +107,8 @@ spec:
       labels:
         app: taskify-laravel
     spec:
-      volumes:
-        name: dir
-        hostPath:
-          path: /code
       containers:
-        - name: laravel
+        - name: taskify-laravel
           image: taskify-laravel:latest
           imagePullPolicy: Never
           ports:
@@ -33,20 +124,15 @@ spec:
   ports:
     - port: 80
       targetPort: 80
+  type: LoadBalancer
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: v1
+kind: Service
 metadata:
-  name: taskify-ingress
+  name: mysql
 spec:
-  rules:
-    - host: localhost
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: taskify-laravel-service
-                port:
-                  number: 80
+  selector:
+    app: mysql  # Matches the labels in your StatefulSet
+  ports:
+  - port: 3306
+  clusterIP: None  # Creates a headless service (important for StatefulSets)

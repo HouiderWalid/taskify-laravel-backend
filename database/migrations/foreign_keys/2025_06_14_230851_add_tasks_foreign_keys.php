@@ -31,10 +31,8 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table(Task::TABLE_NAME, function (Blueprint $table) {
-            $table->dropForeign([
-                Task::getProjectIdAttributeName(),
-                Task::getAssignedToUserIdAttributeName()
-            ]);
+            $table->dropForeign([Task::getProjectIdAttributeName()]);
+            $table->dropForeign([Task::getAssignedToUserIdAttributeName()]);
         });
     }
 };

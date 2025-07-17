@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Classes\Helpers\UserPermission;
+use App\Models\Permission;
 use App\Models\Role;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -28,6 +30,16 @@ class RoleFactory extends Factory
         return [
             Role::getNameAttributeName() => $this->faker->unique()->randomElement(Role::getRoles())
         ];
+    }
+
+    public function configure(): RoleFactory|Factory
+    {
+        return $this->afterCreating(function (Role $role) {
+            $role->defaultPermissions()->sync(
+                Permission::whereIn(Permission::getNameAttributeName(), UserPermission::ROLE_DEFAULT_PERMISSIONS[$role->getName()])
+                    ->pluck(Permission::getIdAttributeName())
+            );
+        });
     }
 
     /**
