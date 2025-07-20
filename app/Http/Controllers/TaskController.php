@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\helpers\BaseModel;
 use App\Models\Project;
+use App\Models\Role;
 use App\Models\Task;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,29 +16,41 @@ use Illuminate\Validation\Rule;
 class TaskController extends Controller
 {
 
-    public function createTasks(Request $request)
+    public function createTask(Request $request)
     {
-        return $this->tryInRestrictedContext($request, function (Request $request) use ($request) {
+        return $this->tryInRestrictedContext($request, function (Request $request) {
 
+            $timeZone = $request->query("timezone");
             $validationRules = [
-                'user_id' => ['required', User::existIn()],
+                'member_id' => ['required', User::existIn()],
                 'project_id' => ['required', Project::existIn()],
                 'title' => 'required|min:3|max:255',
                 'description' => 'required|min:3|max:5000',
                 'priority' => ['required', Rule::in(Task::getPriorityNames())],
-                'status' => ['required', Rule::in(Task::getStatusNames())],
+                'due_date' => [
+                    'required',
+                    'date',
+                    function ($attribute, $value, $fail) use ($request, $timeZone) {
+                        $date = Carbon::parse($value, $timeZone);
+                        if (!$date->isFuture()) {
+                            $fail('Please choose a date in the future.');
+                        }
+                    }
+                ]
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
-            if ($validator->fails()) return $this->apiResponse(401, [], $validator->errors());
+            if ($validator->fails()) {
+                return $this->apiResponse(401, [], $validator->errors());
+            }
 
             $task = Task::create([
                 Task::getProjectIdAttributeName() => $request->input('project_id'),
                 Task::getAssignedToUserIdAttributeName() => $request->input('user_id'),
                 Task::getTitleAttributeName() => $request->input('title'),
                 Task::getDescriptionAttributeName() => $request->input('description'),
+                Task::getDueDateAttributeName() => $request->input('due_date'),
                 Task::getPriorityAttributeName() => $request->input('priority'),
-                Task::getStatusAttributeName() => $request->input('status'),
             ]);
 
             if (!($task instanceof Task)) {
@@ -55,28 +70,40 @@ class TaskController extends Controller
                 throw new Exception("Task not found");
             }
 
+            $timeZone = $request->query("timezone");
             $validationRules = [
-                'user_id' => ['required', User::existIn()],
+                'member_id' => ['required', User::existIn()],
                 'project_id' => ['required', Project::existIn()],
                 'title' => 'required|min:3|max:255',
                 'description' => 'required|min:3|max:5000',
                 'priority' => ['required', Rule::in(Task::getPriorityNames())],
-                'status' => ['required', Rule::in(Task::getStatusNames())],
+                'due_date' => [
+                    'required',
+                    'date',
+                    function ($attribute, $value, $fail) use ($request, $timeZone) {
+                        $date = Carbon::parse($value, $timeZone);
+                        if (!$date->isFuture()) {
+                            $fail('Please choose a date in the future.');
+                        }
+                    }
+                ]
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
-            if ($validator->fails()) return $this->apiResponse(401, [], $validator->errors());
+            if ($validator->fails()) {
+                return $this->apiResponse(401, [], $validator->errors());
+            }
 
             $isUpdated = $task->update([
                 Task::getProjectIdAttributeName() => $request->input('project_id'),
-                Task::getAssignedToUserIdAttributeName() => $request->input('user_id'),
+                Task::getAssignedToUserIdAttributeName() => $request->input('member_id'),
                 Task::getTitleAttributeName() => $request->input('title'),
                 Task::getDescriptionAttributeName() => $request->input('description'),
+                Task::getDueDateAttributeName() => $request->input('due_date'),
                 Task::getPriorityAttributeName() => $request->input('priority'),
-                Task::getStatusAttributeName() => $request->input('status'),
             ]);
 
-            if (!($isUpdated)) {
+            if (!$isUpdated) {
                 throw new Exception("Task update failed");
             }
 
@@ -88,7 +115,19 @@ class TaskController extends Controller
     {
         return $this->tryInRestrictedContext($request, function (Request $request, User $user) use ($message) {
 
-            $tasks = Task::with('project');
+            $relations = [
+                'project'
+            ];
+
+            if ($user->isAdmin()) {
+                array_push($relations, BaseModel::getRelationInlineAttributes('assignedToUser', [
+                    User::getIdAttributeName(),
+                    User::getFullNameAttributeName()
+                ]));
+            }
+
+            $tasks = Task::with($relations)
+                ->orderByDesc(Task::getCreatedAtAttributeName());
 
             if (!$user->isAdmin()) {
                 $tasks->where(Task::getAssignedToUserIdAttributeName(), $user->getId());
@@ -107,11 +146,47 @@ class TaskController extends Controller
                 throw new Exception("Task not found");
             }
 
-            if (!$task->update()){
+            if (!$task->update()) {
                 throw new Exception("Task delete failure");
             }
 
             return $this->getFilteredTasks($request, 'Task Deleted Successfully.');
+        });
+    }
+
+    public function getFormProjects(Request $request)
+    {
+        return $this->tryInRestrictedContext($request, function (Request $request, User $user) {
+
+            $projects = Project::select([
+                Project::getIdAttributeName(),
+                Project::getNameAttributeName()
+            ]);
+
+            if (!$user->isAdmin()) {
+                $projects->where(Project::getOwnerIdAttributeName(), $user->getId());
+            }
+
+            $projects = $projects->orderByDesc(Project::getCreatedAtAttributeName())
+                ->get();
+
+            return $this->apiResponse(200, $projects);
+        });
+    }
+
+    public function getFormMembers(Request $request)
+    {
+        return $this->tryInRestrictedContext($request, function () {
+
+            $users = User::whereHas('role', function ($query) {
+                $query->where(Role::getNameAttributeName(), Role::MEMBER_ROLE);
+            })->select([
+                        User::getIdAttributeName(),
+                        User::getFullNameAttributeName()
+                    ])->orderByDesc(User::getCreatedAtAttributeName())
+                ->get();
+
+            return $this->apiResponse(200, $users);
         });
     }
 }

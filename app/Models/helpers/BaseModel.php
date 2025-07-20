@@ -67,4 +67,9 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 class BaseModel extends Model
 {
     use Validation;
+
+    public static function getRelationInlineAttributes(string $relation, array $attributes): string
+    {
+        return join(':', [$relation, join(',', $attributes)]);
+    }
 }

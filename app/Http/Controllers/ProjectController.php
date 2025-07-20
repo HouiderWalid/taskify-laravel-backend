@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProjectReponse;
 use App\Models\Project;
 use App\Models\User;
 use Carbon\Carbon;
@@ -101,13 +102,20 @@ class ProjectController extends Controller
 
             $projects = Project::with([
                 'tasks'
-            ]);
+            ])->orderByDesc(Project::getCreatedAtAttributeName());
 
             if (!$user->isAdmin()) {
                 $projects->where(Project::getOwnerIdAttributeName(), $user->getId());
             }
 
-            return $this->paginatedApiResponse($request, 200, $projects, $message);
+            return $this->paginatedApiResponse(
+                $request, 
+                200, 
+                $projects, 
+                $message, 
+                null, 
+                ProjectReponse::class
+            );
         });
     }
 
@@ -117,7 +125,7 @@ class ProjectController extends Controller
 
             $project = Project::where(Project::getIdAttributeName(), $projectId);
 
-            if ($user->isAdmin()) {
+            if (!$user->isAdmin()) {
                 $project->where(Project::getOwnerIdAttributeName(), $user->getId());
             }
 
@@ -130,6 +138,8 @@ class ProjectController extends Controller
             if (!$project->delete()) {
                 throw new Exception("Project delete failure.");
             }
+
+            return $this->getFilteredProjects($request, 'Project Deleted Successfully.');
         });
     }
 }

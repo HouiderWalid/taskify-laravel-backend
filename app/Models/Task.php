@@ -16,7 +16,7 @@ class Task extends BaseModel
 
     const LOW_PRIORITY = 'low';
     const MEDIUM_PRIORITY = 'medium';
-    const HEIGHT_PRIORITY = 'height';
+    const HIGH_PRIORITY = 'high';
     const DEFAULT_PRIORITY = self::MEDIUM_PRIORITY;
 
     const id_attribute_name = 'id';
@@ -93,7 +93,7 @@ class Task extends BaseModel
         return [
             self::LOW_PRIORITY,
             self::MEDIUM_PRIORITY,
-            self::HEIGHT_PRIORITY,
+            self::HIGH_PRIORITY,
         ];
     }
 
@@ -104,5 +104,15 @@ class Task extends BaseModel
             self::DONE_STATUS,
             self::TODO_STATUS,
         ];
+    }
+
+    public function getStatus(): string
+    {
+        return $this->getAttribute(self::getStatusAttributeName());
+    }
+
+    public function isDone(): string
+    {
+        return $this->getStatus() === self::DONE_STATUS;
     }
 }

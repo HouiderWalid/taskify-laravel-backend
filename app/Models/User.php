@@ -5,7 +5,6 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\helpers\BaseUser;
 use Carbon\Carbon;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -27,6 +26,7 @@ class User extends BaseUser
     const password_attribute_name = 'password';
     const email_verified_at_attribute_name = 'email_verified_at';
     const email_verified_attribute_name = 'email_verified';
+    const created_at_attribute_name = 'created_at';
 
     /**
      * The attributes that are mass assignable.
@@ -105,6 +105,11 @@ class User extends BaseUser
     public static function getRoleIdAttributeName(): string
     {
         return self::role_id_attribute_name;
+    }
+
+    public static function getCreatedAtAttributeName(): string
+    {
+        return self::created_at_attribute_name;
     }
 
     public function getRole(): ?Role
