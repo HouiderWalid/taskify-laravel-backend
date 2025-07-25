@@ -72,4 +72,9 @@ class BaseModel extends Model
     {
         return join(':', [$relation, join(',', $attributes)]);
     }
+
+        public static function getModelJoinedTo($string = null, $with = '.', $tableName = null): string
+    {
+        return join($with, [$tableName ?? static::TABLE_NAME, $string ?? static::getIdAttributeName()]);
+    }
 }

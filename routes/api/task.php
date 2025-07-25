@@ -21,5 +21,5 @@ Route::middleware(['auth:sanctum', PermissionGuard::class . ':' . UserPermission
             ->put('/{taskId}', [TaskController::class, 'updateTask']);
         Route::middleware(['auth:sanctum', PermissionGuard::class . ':' . UserPermission::DELETE_TASK])
             ->delete('/{taskId}', [TaskController::class, 'deleteTask']);
-        Route::get('/', [TaskController::class, 'getFilteredTaskss']);
+        Route::get('/', [TaskController::class, 'getFilteredTasks']);
     });

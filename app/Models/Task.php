@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use App\Models\helpers\BaseModel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Summary of Task
+ */
 class Task extends BaseModel
 {
+    use HasFactory;
+    
     const TABLE_NAME = 'tasks';
 
     const TODO_STATUS = 'todo';
@@ -27,6 +33,9 @@ class Task extends BaseModel
     const status_attribute_name = 'status';
     const priority_attribute_name = 'priority';
     const due_date_attribute_name = 'due_date';
+    const created_at_attribute_name = 'created_at';
+    const assigned_to_user_attribute_name = 'assignedToUser';
+    const project_attribute_name = 'project';
 
     protected $fillable = [
         self::project_id_attribute_name,
@@ -36,6 +45,7 @@ class Task extends BaseModel
         self::status_attribute_name,
         self::priority_attribute_name,
         self::due_date_attribute_name,
+        self::created_at_attribute_name,
     ];
 
     public function project(): BelongsTo
@@ -88,6 +98,21 @@ class Task extends BaseModel
         return self::due_date_attribute_name;
     }
 
+    public static function getCreatedAtAttributeName(): string
+    {
+        return self::created_at_attribute_name;
+    }
+
+    public static function getAssignedToUserAttributeName(): string
+    {
+        return self::assigned_to_user_attribute_name;
+    }
+
+    public static function getProjectAttributeName(): string
+    {
+        return self::project_attribute_name;
+    }
+
     public static function getPriorityNames(): array
     {
         return [
@@ -106,13 +131,55 @@ class Task extends BaseModel
         ];
     }
 
+    public function getId(): string
+    {
+        return $this->getAttribute(self::getIdAttributeName());
+    }
+
+    public function getTitle(): string
+    {
+        return $this->getAttribute(self::getTitleAttributeName());
+    }
+
+    public function getDescription(): string
+    {
+        return $this->getAttribute(self::getDescriptionAttributeName());
+    }
+
+    public function getPriority(): string
+    {
+        return $this->getAttribute(self::getPriorityAttributeName());
+    }
+
     public function getStatus(): string
     {
         return $this->getAttribute(self::getStatusAttributeName());
     }
 
+    public function getDueDate(): string
+    {
+        return $this->getAttribute(self::getDueDateAttributeName());
+    }
+
     public function isDone(): string
     {
         return $this->getStatus() === self::DONE_STATUS;
+    }
+
+    public function getCreatedAt()
+    {
+        return $this->getAttribute(self::getCreatedAtAttributeName());
+    }
+
+    public function getAssignedToUser(): ?User
+    {
+        $user = $this->{self::getAssignedToUserAttributeName()} ?? null;
+        return $user instanceof User ? $user : null;
+    }
+
+    public function getProject(): ?Project
+    {
+        $project = $this->{self::getProjectAttributeName()} ?? null;
+        return $project instanceof Project ? $project : null;
     }
 }

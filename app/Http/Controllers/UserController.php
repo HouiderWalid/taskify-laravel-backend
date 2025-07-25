@@ -44,7 +44,7 @@ class UserController extends Controller
 
             return $this->apiResponse(200, [
                 'token' => $token,
-                'user' => $user
+                'user' => $user->getAuthenticationData()
             ]);
         });
     }
@@ -91,7 +91,7 @@ class UserController extends Controller
 
             return $this->apiResponse(200, [
                 'token' => $token,
-                'user' => $user
+                'user' => $user->getAuthenticationData()
             ]);
         });
     }
@@ -104,7 +104,7 @@ class UserController extends Controller
                 throw new Exception("User not found");
             }
 
-            return $this->apiResponse(200, $user);
+            return $this->apiResponse(200, $user->getAuthenticationData());
         });
     }
 }

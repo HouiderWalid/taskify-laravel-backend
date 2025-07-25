@@ -23,6 +23,10 @@ class Permission extends BaseModel
         self::name_attribute_name
     ];
 
+    protected $hidden = [
+        'pivot'
+    ];
+
     public $timestamps = false;
 
     public static function getIdAttributeName(): string

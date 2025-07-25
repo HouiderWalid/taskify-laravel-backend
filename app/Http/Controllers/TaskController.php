@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TaskResponse;
 use App\Models\helpers\BaseModel;
 use App\Models\Project;
 use App\Models\Role;
@@ -46,7 +47,7 @@ class TaskController extends Controller
 
             $task = Task::create([
                 Task::getProjectIdAttributeName() => $request->input('project_id'),
-                Task::getAssignedToUserIdAttributeName() => $request->input('user_id'),
+                Task::getAssignedToUserIdAttributeName() => $request->input('member_id'),
                 Task::getTitleAttributeName() => $request->input('title'),
                 Task::getDescriptionAttributeName() => $request->input('description'),
                 Task::getDueDateAttributeName() => $request->input('due_date'),
@@ -111,29 +112,17 @@ class TaskController extends Controller
         });
     }
 
-    public function getFilteredTasks(Request $request, string $message)
+    public function getFilteredTasks(Request $request, string $message = '')
     {
         return $this->tryInRestrictedContext($request, function (Request $request, User $user) use ($message) {
 
-            $relations = [
-                'project'
-            ];
-
-            if ($user->isAdmin()) {
-                array_push($relations, BaseModel::getRelationInlineAttributes('assignedToUser', [
-                    User::getIdAttributeName(),
-                    User::getFullNameAttributeName()
-                ]));
-            }
-
-            $tasks = Task::with($relations)
-                ->orderByDesc(Task::getCreatedAtAttributeName());
+            $tasks = Task::orderByDesc(Task::getCreatedAtAttributeName());
 
             if (!$user->isAdmin()) {
                 $tasks->where(Task::getAssignedToUserIdAttributeName(), $user->getId());
             }
 
-            return $this->paginatedApiResponse($request, 200, $tasks, $message);
+            return $this->paginatedApiResponse($request, 200, $tasks, $message, TaskResponse::class);
         });
     }
 
@@ -146,7 +135,7 @@ class TaskController extends Controller
                 throw new Exception("Task not found");
             }
 
-            if (!$task->update()) {
+            if (!$task->delete()) {
                 throw new Exception("Task delete failure");
             }
 
@@ -164,7 +153,7 @@ class TaskController extends Controller
             ]);
 
             if (!$user->isAdmin()) {
-                $projects->where(Project::getOwnerIdAttributeName(), $user->getId());
+                $projects->where(Project::getCreatorIdAttributeName(), $user->getId());
             }
 
             $projects = $projects->orderByDesc(Project::getCreatedAtAttributeName())

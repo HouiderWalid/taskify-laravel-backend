@@ -14,7 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table(Project::TABLE_NAME, function (Blueprint $table) {
-            $table->foreign(Project::getOwnerIdAttributeName())
+            $table->foreign(Project::getCreatorIdAttributeName())
                 ->references(User::getIdAttributeName())
                 ->on(User::TABLE_NAME)
                 ->nullOnDelete();
@@ -27,7 +27,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table(Project::TABLE_NAME, function (Blueprint $table) {
-            $table->dropForeign([Project::getOwnerIdAttributeName()]);
+            $table->dropForeign([Project::getCreatorIdAttributeName()]);
         });
     }
 };

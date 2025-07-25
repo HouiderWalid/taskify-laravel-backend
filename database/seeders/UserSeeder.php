@@ -17,5 +17,7 @@ class UserSeeder extends Seeder
             ->credentials('houiderwalid@gmail.com', '123456789')
             ->giveRole(Role::ADMIN_ROLE)
             ->create();
+
+        User::factory()->giveRole(Role::MEMBER_ROLE)->count(10)->create();
     }
 }

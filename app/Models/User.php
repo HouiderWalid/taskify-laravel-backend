@@ -3,8 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\helpers\BaseModel;
 use App\Models\helpers\BaseUser;
+use App\Observers\UserObserver;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,6 +15,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
+#[ObservedBy([UserObserver::class])]
 class User extends BaseUser
 {
     /** @use HasFactory<UserFactory> */
@@ -27,6 +31,8 @@ class User extends BaseUser
     const email_verified_at_attribute_name = 'email_verified_at';
     const email_verified_attribute_name = 'email_verified';
     const created_at_attribute_name = 'created_at';
+    const role_attribute_name = 'role';
+    const permissions_attribute_name = 'permissions';
 
     /**
      * The attributes that are mass assignable.
@@ -112,9 +118,19 @@ class User extends BaseUser
         return self::created_at_attribute_name;
     }
 
+    public static function getRoleAttributeName(): string
+    {
+        return self::role_attribute_name;
+    }
+
+    public static function getPermissionsAttributeName(): string
+    {
+        return self::permissions_attribute_name;
+    }
+
     public function getRole(): ?Role
     {
-        $role = $this->role ?? null;
+        $role = $this->{self::getRoleAttributeName()} ?? null;
         return $role instanceof Role ? $role : null;
     }
 
@@ -126,6 +142,11 @@ class User extends BaseUser
     public function getId()
     {
         return $this->getAttribute(self::getIdAttributeName());
+    }
+
+    public function getFullName()
+    {
+        return $this->getAttribute(self::getFullNameAttributeName());
     }
 
     public function getEmailVerifiedAt()
@@ -169,8 +190,39 @@ class User extends BaseUser
         $permissions = $this->getPermissions();
         return $permissions->contains(
             fn(Permission $permission) => is_array($permissionName)
-                ? in_array($permission->getName(), $permissionName)
-                : $permission->getName() === $permissionName
+            ? in_array($permission->getName(), $permissionName)
+            : $permission->getName() === $permissionName
         );
+    }
+
+    public function getAuthenticationData()
+    {
+        return User::where(User::getIdAttributeName(), $this->getId())
+            ->with([
+                BaseModel::getRelationInlineAttributes(self::getRoleAttributeName(), [
+                    Role::getIdAttributeName(),
+                    Role::getNameAttributeName(),
+                ]),
+                BaseModel::getRelationInlineAttributes(self::getPermissionsAttributeName(), [
+                    Permission::getIdAttributeName(),
+                    Permission::getNameAttributeName(),
+                ])
+            ])
+            ->first();
+    }
+
+    public function initUserDefaultPermissions()
+    {
+        $role = $this->getRole();
+        if ($role) {
+            $this->permissions()->sync($role->getDefaultPermissions()->pluck(Permission::getIdAttributeName()));
+        }
+
+        return $this;
+    }
+
+    public function getTokenText()
+    {
+        return $this->createToken(config('app.name'))->plainTextToken;
     }
 }

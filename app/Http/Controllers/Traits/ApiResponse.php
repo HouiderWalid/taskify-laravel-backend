@@ -74,11 +74,10 @@ trait ApiResponse
         }
     }
 
-    public function paginatedApiResponse(Request $request, $code, Builder $data, $messages = '', ?callable $callable = null, $ressource = null)
+    public function paginatedApiResponse(Request $request, $code, Builder $data, $messages = '', $ressource = null)
     {
         $show = intval($request->query('per_page'));
         $pagination = $data->paginate($show > 0 ? $show : config('app.app_pagination_max_value'));
-        if ($callable) $pagination = $callable($pagination, $request);
         if ($ressource) $pagination = new $ressource($pagination);
 
         return response()->json([

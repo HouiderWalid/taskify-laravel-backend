@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create(Project::TABLE_NAME, function (Blueprint $table) {
             $table->id(Project::getIdAttributeName());
-            $table->unsignedBigInteger(Project::getOwnerIdAttributeName())->index()->nullable();
+            $table->unsignedBigInteger(Project::getCreatorIdAttributeName())->index()->nullable();
             $table->string(Project::getNameAttributeName());
             $table->string(Project::getDescriptionAttributeName(), 5000)->nullable();
             $table->timestamp(Project::getDueDateAttributeName())->nullable();

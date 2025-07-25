@@ -21,12 +21,16 @@ class ProjectController extends Controller
             $validationRules = [
                 'name' => 'required|min:3|max:100',
                 'description' => 'required|min:3|max:5000',
-                'due_date' => ['required', 'date', function ($attribute, $value, $fail) use ($request, $timeZone) {
-                    $date = Carbon::parse($value, $timeZone);
-                    if (!$date->isFuture()) {
-                        $fail('Please choose a date in the future.');
+                'due_date' => [
+                    'required',
+                    'date',
+                    function ($attribute, $value, $fail) use ($request, $timeZone) {
+                        $date = Carbon::parse($value, $timeZone);
+                        if (!$date->isFuture()) {
+                            $fail('Please choose a date in the future.');
+                        }
                     }
-                }]
+                ]
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
@@ -35,7 +39,7 @@ class ProjectController extends Controller
             }
 
             $project = Project::create([
-                Project::getOwnerIdAttributeName() => $user->getId(),
+                Project::getCreatorIdAttributeName() => $user->getId(),
                 Project::getNameAttributeName() => $request->get('name'),
                 Project::getDescriptionAttributeName() => $request->get('description'),
                 Project::getDueDateAttributeName() => $request->get('due_date'),
@@ -56,7 +60,7 @@ class ProjectController extends Controller
             $project = Project::where(Project::getIdAttributeName(), $projectId);
 
             if (!$user->isAdmin()) {
-                $project->where(Project::getOwnerIdAttributeName(), $user->getId());
+                $project->where(Project::getCreatorIdAttributeName(), $user->getId());
             }
 
             $project = $project->first();
@@ -69,12 +73,16 @@ class ProjectController extends Controller
             $validationRules = [
                 'name' => 'required|min:3|max:100',
                 'description' => 'required|min:3|max:5000',
-                'due_date' => ['required', 'date', function ($attribute, $value, $fail) use ($request, $timeZone) {
-                    $date = Carbon::parse($value, $timeZone);
-                    if (!$date->isFuture()) {
-                        $fail('Please choose a date in the future.');
+                'due_date' => [
+                    'required',
+                    'date',
+                    function ($attribute, $value, $fail) use ($request, $timeZone) {
+                        $date = Carbon::parse($value, $timeZone);
+                        if (!$date->isFuture()) {
+                            $fail('Please choose a date in the future.');
+                        }
                     }
-                }]
+                ]
             ];
 
             $validator = Validator::make($request->all(), $validationRules);
@@ -100,20 +108,17 @@ class ProjectController extends Controller
     {
         return $this->tryInRestrictedContext($request, function (Request $request, User $user) use ($message) {
 
-            $projects = Project::with([
-                'tasks'
-            ])->orderByDesc(Project::getCreatedAtAttributeName());
+            $projects = Project::orderByDesc(Project::getCreatedAtAttributeName());
 
             if (!$user->isAdmin()) {
-                $projects->where(Project::getOwnerIdAttributeName(), $user->getId());
+                $projects->where(Project::getCreatorIdAttributeName(), $user->getId());
             }
 
             return $this->paginatedApiResponse(
-                $request, 
-                200, 
-                $projects, 
-                $message, 
-                null, 
+                $request,
+                200,
+                $projects,
+                $message,
                 ProjectReponse::class
             );
         });
@@ -126,7 +131,7 @@ class ProjectController extends Controller
             $project = Project::where(Project::getIdAttributeName(), $projectId);
 
             if (!$user->isAdmin()) {
-                $project->where(Project::getOwnerIdAttributeName(), $user->getId());
+                $project->where(Project::getCreatorIdAttributeName(), $user->getId());
             }
 
             $project = $project->first();

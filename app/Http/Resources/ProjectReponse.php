@@ -20,16 +20,17 @@ class ProjectReponse extends ResourceCollection
             'current_page' => $this->currentPage(),
             'data' => $this->collection->map(function (Project $project) {
                 $tasks = $project->getTasks();
-                $doneTasks = $tasks->map(fn(Task $task) => $task->isDone());
-                //$members = $tasks->unique(Task::getAssignedToUserIdAttributeName());
+                $doneTasks = $tasks->filter(fn(Task $task) => $task->isDone());
+                $assignedMembersCount = $tasks->pluck(Task::getAssignedToUserIdAttributeName())->unique()->count();
+                
                 return [
-                    'id' => $project->getId(),
-                    'name' => $project->getName(),
-                    'description' => $project->getDescription(),
-                    'due_date' => $project->getDueDate(),
-                    'tasks_done_count' => $doneTasks->count(),
-                    'tasks_count' => $tasks->count(),
-                    //'teamMembers' => 
+                    Project::getIdAttributeName() => $project->getId(),
+                    Project::getNameAttributeName() => $project->getName(),
+                    Project::getDescriptionAttributeName() => $project->getDescription(),
+                    Project::getDueDateAttributeName() => $project->getDueDate(),
+                    Project::getTasksDoneCountAttributeName() => $doneTasks->count(),
+                    Project::getTasksCountAttributeName() => $tasks->count(),
+                    Project::getTaskAsssignedMembersCountAttributeName() => $assignedMembersCount,
                 ];
             })->toArray(),
             'per_page' => $this->perPage(),
