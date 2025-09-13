@@ -116,7 +116,8 @@ class TaskController extends Controller
     {
         return $this->tryInRestrictedContext($request, function (Request $request, User $user) use ($message) {
 
-            $tasks = Task::orderByDesc(Task::getCreatedAtAttributeName());
+            $tasks = Task::orderByDesc(Task::getIdAttributeName())
+                ->orderByDesc(Task::getCreatedAtAttributeName());
 
             if (!$user->isAdmin()) {
                 $tasks->where(Task::getAssignedToUserIdAttributeName(), $user->getId());
