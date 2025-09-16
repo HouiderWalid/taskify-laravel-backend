@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskify-laravel-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: taskify-laravel
+  template:
+    metadata:
+      labels:
+        app: taskify-laravel
+    spec:
+      containers:
+        - name: taskify-laravel
+          image: taskify-laravel:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
