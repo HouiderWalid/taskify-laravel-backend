@@ -3,20 +3,23 @@ pipeline{
     stages {
         stage('Build') {
             steps {
-                echo 'Building...'
-                // Add your build steps here
+                sh 'docker build -f docker/local/php/Dockerfile -t taskify-laravel .'
+                sh 'minikube delete && minikube start --driver=docker --memory=4096 --cpus=4'
+                sh 'kubectl apply -f k8s/local/mysql/deployment.yaml'
+                sh 'kubectl apply -f k8s/local/mysql/service.yaml'
+                sh 'kubectl apply -f k8s/local/app/deployment.yaml'
+                sh 'kubectl apply -f k8s/local/app/service.yaml'
+                sh 'nohup minikube tunnel --cleanup 2>&1'
             }
         }
         stage('Test') {
             steps {
                 echo 'Testing...'
-                // Add your test steps here
             }
         }
         stage('Deploy') {
             steps {
                 echo 'Deploying...'
-                // Add your deployment steps here
             }
         }
     }
