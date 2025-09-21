@@ -6,12 +6,14 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Task;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
+use Tests\Helpers\CustomRefreshDatabase;
 use Tests\TestCase;
 
 class TaskTest extends TestCase
 {
+
+    use CustomRefreshDatabase;
+    
     public function getAUserToken()
     {
         $email = fake()->email();

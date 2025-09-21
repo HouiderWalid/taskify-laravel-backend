@@ -1,16 +1,19 @@
 pipeline{
     agent any
+
     stages {
-        stage('Build') {
-            steps {
-                echo 'Building...'
-                // Add your build steps here
-            }
-        }
         stage('Test') {
             steps {
-                echo 'Testing...'
-                // Add your test steps here
+                sh 'docker build -t taskify-laravel-backend-test -f docker/local/php/Dockerfile .'
+                sh 'docker run -d --name taskify-laravel-backend-test-1 taskify-laravel-backend-test:latest'
+                sh 'docker exec -i taskify-laravel-backend-test-1 php artisan test'
+            }
+            post {
+                always {
+                    sh 'docker stop taskify-laravel-backend-test-1'
+                    sh 'docker rm taskify-laravel-backend-test-1'
+                    sh 'docker rmi taskify-laravel-backend-test:latest'
+                }
             }
         }
         stage('Deploy') {
