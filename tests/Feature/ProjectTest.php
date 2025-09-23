@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
-use Tests\Helpers\CustomRefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ProjectTest extends TestCase
 {
-    use CustomRefreshDatabase;
+    use RefreshDatabase;
+
+    protected $seed = true;
 
     public function getAUserToken()
     {
@@ -24,9 +26,6 @@ class ProjectTest extends TestCase
         return $token;
     }
 
-    /**
-     * A basic feature test example.
-     */
     public function test_successfull_create_project(): void
     {
         $userToken = $this->getAUserToken();
@@ -36,12 +35,14 @@ class ProjectTest extends TestCase
         $dueDate = fake()->dateTimeBetween('now', '+1 month')->format('Y-m-d H:i:s');
         $timeZone = fake()->timezone();
 
-        $response = $this->post('/api/project?timezone=' . $timeZone, [
+        $data = [
             'name' => $name,
             'description' => $description,
-            'due_date' => $dueDate
-        ], [
-            'Authorization' => 'Bearer ' . $userToken,
+            'due_date' => $dueDate,
+        ];
+
+        $response = $this->post('/api/project?timezone='.$timeZone, $data, [
+            'Authorization' => 'Bearer '.$userToken,
         ]);
 
         $response->assertStatus(200);
@@ -67,12 +68,13 @@ class ProjectTest extends TestCase
         $dueDate = fake()->dateTimeBetween('now', '+1 month')->format('Y-m-d H:i:s');
         $timeZone = fake()->timezone();
 
-        $response = $this->put("/api/project/$projectId?timezone=" . $timeZone, [
+        $uri = "/api/project/$projectId?timezone=".$timeZone;
+        $response = $this->put($uri, [
             'name' => $name,
             'description' => $description,
-            'due_date' => $dueDate
+            'due_date' => $dueDate,
         ], [
-            'Authorization' => 'Bearer ' . $userToken,
+            'Authorization' => 'Bearer '.$userToken,
         ]);
 
         $response->assertStatus(200);
@@ -86,14 +88,15 @@ class ProjectTest extends TestCase
         $this->assertNotNull($projectUpdated);
     }
 
-    public function test_successfull_delete_project(){
+    public function test_successfull_delete_project()
+    {
         $userToken = $this->getAUserToken();
-        
+
         $projectToDelete = Project::factory()->create();
         $projectId = $projectToDelete->getId();
 
         $response = $this->delete("/api/project/$projectId", [], [
-            'Authorization' => 'Bearer ' . $userToken,
+            'Authorization' => 'Bearer '.$userToken,
         ]);
 
         $response->assertStatus(200);

@@ -8,6 +8,7 @@ use Arr;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Route;
 
 class OverviewController extends Controller
 {
@@ -49,7 +50,6 @@ class OverviewController extends Controller
     public function getProjectsCount(Request $request)
     {
         return $this->tryInRestrictedContext($request, function (Request $request) {
-
             return $this->apiResponse(200, Project::count());
         });
     }
