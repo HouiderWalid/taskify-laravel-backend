@@ -5,12 +5,15 @@ namespace Tests\Feature;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Helpers\CustomRefreshDatabase;
 use Tests\TestCase;
 
 class ProjectTest extends TestCase
 {
-    use CustomRefreshDatabase;
+    use RefreshDatabase;
+
+    protected $seed = true;
 
     public function getAUserToken()
     {
@@ -29,6 +32,9 @@ class ProjectTest extends TestCase
      */
     public function test_successfull_create_project(): void
     {
+        $connection = \DB::connection(); // Get current connection
+    $driver = $connection->getDriverName(); // e.g., mysql, sqlite, pgsql
+    dump($driver);
         $userToken = $this->getAUserToken();
 
         $name = fake()->name();
@@ -43,6 +49,10 @@ class ProjectTest extends TestCase
         ], [
             'Authorization' => 'Bearer ' . $userToken,
         ]);
+
+        dump('test_successfull_create_project');
+        dump(config('app.url'));
+        dump($response->getContent());
 
         $response->assertStatus(200);
         $response->assertJsonPath('code', 200);
@@ -74,6 +84,11 @@ class ProjectTest extends TestCase
         ], [
             'Authorization' => 'Bearer ' . $userToken,
         ]);
+
+        dump('test_successfull_create_project');
+        dump(config('app.url'));
+        dump($projectId);
+        dump($response->getContent());
 
         $response->assertStatus(200);
         $response->assertJsonPath('code', 200);

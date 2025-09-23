@@ -4,10 +4,13 @@ pipeline{
         stage('Test') {
             steps {
                 sh 'docker build -t taskify-laravel-backend-test -f docker/local/php/Dockerfile .'
-                sh 'docker run -d --name taskify-laravel-backend-test-1 taskify-laravel-backend-test:latest'
+                withCredentials([file(credentialsId: 'taskify-laravel-backend-env-file', variable: 'ENV_FILE')]) {
+                    sh 'docker run -d --name taskify-laravel-backend-test-1 -v $ENV_FILE:/var/www/html/.env taskify-laravel-backend-test:latest'
+                }
                 sh 'docker exec -i -e COMPOSER_ALLOW_SUPERUSER=1 taskify-laravel-backend-test-1 sh -c "rm -rf vendor composer.lock && composer clear-cache --no-interaction && composer install --no-interaction"'
                 sh 'docker exec -i taskify-laravel-backend-test-1 chown -R www-data:www-data /var/www/html'
-                sh 'docker exec -i taskify-laravel-backend-test-1 php artisan optimize'
+                sh 'docker exec -i taskify-laravel-backend-test-1 sh -c "php artisan route:clear && php artisan config:clear"'
+                sh 'docker exec -i taskify-laravel-backend-test-1 php artisan route:list'
                 sh 'docker exec -i taskify-laravel-backend-test-1 php artisan test'
             }
             post {
@@ -18,13 +21,13 @@ pipeline{
                 }
             }
         }
-        stage('Deploy') {
+        /*stage('Deploy') {
             steps {
                 withCredentials([file(credentialsId: 'taskify-laravel-backend-env-file', variable: 'ENV_FILE')]) {
                     sh 'cp $ENV_FILE .env'
                 }
                 sh 'docker-compose -f docker/local/docker-compose.yml --env-file .env up -d --build'
             }
-        }
+        }*/
     }
 }

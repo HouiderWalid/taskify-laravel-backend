@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Helpers\CustomRefreshDatabase;
 use Tests\TestCase;
 
 class UserTest extends TestCase
 {
-    use CustomRefreshDatabase;
+    use RefreshDatabase;
+
+    protected $seed = true;
 
     public function test_unique_email_signin()
     {

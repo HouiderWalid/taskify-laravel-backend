@@ -6,13 +6,16 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Helpers\CustomRefreshDatabase;
 use Tests\TestCase;
 
 class TaskTest extends TestCase
 {
 
-    use CustomRefreshDatabase;
+    use RefreshDatabase;
+
+    protected $seed = true;
     
     public function getAUserToken()
     {
