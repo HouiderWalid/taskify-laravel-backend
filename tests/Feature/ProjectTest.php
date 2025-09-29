@@ -26,7 +26,7 @@ class ProjectTest extends TestCase
         return $token;
     }
 
-    public function test_successfull_create_project(): void
+    public function test_successful_create_project(): void
     {
         $userToken = $this->getAUserToken();
 

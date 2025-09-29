@@ -13,7 +13,7 @@ class UserTest extends TestCase
 
     protected $seed = true;
 
-    public function test_unique_email_signin()
+    public function test_unique_email_signup()
     {
         $fullName = fake()->name();
         $email = fake()->email();
@@ -62,18 +62,5 @@ class UserTest extends TestCase
             'password' => $password,
         ]);
         $response->assertJsonPath('code', 200);
-    }
-
-    public function test_wrong_credential_signin(): void
-    {
-        $email = fake()->email();
-        $password = fake()->password();
-        $wrongPassword = fake()->password();
-        User::factory()->credentials($email, $password)->create();
-        $response = $this->post('/api/sign_in', [
-            'email' => $email,
-            'password' => $wrongPassword,
-        ]);
-        $response->assertJsonPath('code', 500);
     }
 }

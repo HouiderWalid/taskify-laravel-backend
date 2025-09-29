@@ -2,15 +2,16 @@ pipeline{
     agent any
     environment {
         ENV_FILE = credentials('taskify-laravel-backend-env-file')
-        AWS_ACCESS_DATA = credentials('taskify-aws-secret')
-        AWS_REGION = credentials('taskify-aws-region')
-        ECR_REPOSITORY = credentials('taskify-aws-ecr-repository-name')
-        AWS_ACCOUNT_ID = credentials('taskify-aws-account-id')
+        AWS_ACCESS_DATA = credentials('taskify-laravel-backend-aws-secret')
+        AWS_REGION = credentials('taskify-laravel-backend-aws-region')
+        ECR_REPOSITORY = credentials('taskify-laravel-backend-aws-ecr-repository-name')
+        AWS_ACCOUNT_ID = credentials('taskify-laravel-backend-aws-account-id')
+        EKS_CLUSTER_NAME = credentials('taskify-laravel-backend-aws-eks-cluster-name')
     }
     stages {
         stage('Test') {
             steps {
-                sh 'docker build -t taskify-laravel-backend-test -f docker/prod/php/Dockerfile .'
+                sh 'docker build -t taskify-laravel-backend-test -f docker/prod/php/Dockerfile.test .'
                 sh 'docker run -d --name taskify-laravel-backend-test-1 taskify-laravel-backend-test:latest'
                 sh 'docker cp "$ENV_FILE" taskify-laravel-backend-test-1:/var/www/html/.env'
                 sh 'docker exec -i -e COMPOSER_ALLOW_SUPERUSER=1 taskify-laravel-backend-test-1 composer install --no-interaction'
@@ -32,7 +33,12 @@ pipeline{
                 sh 'docker build -t taskify-laravel-backend -f docker/prod/php/Dockerfile .'
                 sh 'aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_REGION".amazonaws.com'
                 sh 'docker tag taskify-laravel-backend:latest "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_REGION".amazonaws.com/"$ECR_REPOSITORY":latest'
+                sh 'aws ecr batch-delete-image --repository-name "$ECR_REPOSITORY" --image-ids imageTag=latest || true'
                 sh 'docker push "$AWS_ACCOUNT_ID".dkr.ecr."$AWS_REGION".amazonaws.com/"$ECR_REPOSITORY":latest'
+                sh 'aws eks --region "$AWS_REGION" update-kubeconfig --name "$EKS_CLUSTER_NAME"'
+                sh 'kubectl create secret generic taskify-laravel-back-env --from-env-file="$ENV_FILE" --dry-run=client -o yaml | kubectl apply -f -'
+                sh 'kubectl apply -f k8s/deployment.yaml'
+                sh 'kubectl apply -f k8s/service.yaml'
             }
         }
     }

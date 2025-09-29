@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: taskify-laravel-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: taskify-laravel
@@ -14,7 +14,6 @@ spec:
     spec:
       containers:
         - name: taskify-laravel
-          image: taskify-laravel:latest
-          imagePullPolicy: Never
+          image: <aws-account-id>.dkr.ecr.<region>.amazonaws.com/<docker-image>:<version>
           ports:
             - containerPort: 80
